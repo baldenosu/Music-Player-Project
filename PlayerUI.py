@@ -8,10 +8,17 @@
 # Imports
 import customtkinter
 from PIL import Image
+import pygame
 import PlaylistsUI
 
 customtkinter.set_appearance_mode('dark')
 
+# Setup Sound control
+pygame.mixer.init()
+track = '2 - Rocks Rock!.mp3'
+pygame.mixer.music.load(track)
+pygame.mixer.music.play()
+pygame.mixer.music.pause()
 
 class Player(customtkinter.CTk):
     def __init__(self):
@@ -39,8 +46,9 @@ class Player(customtkinter.CTk):
         self.track_info.grid(row=1, column=0, columnspan=5)
 
         # Track Slider
-        self.slider = customtkinter.CTkSlider(master=self, from_=0, to=100, width=400)
+        self.slider = customtkinter.CTkSlider(master=self, from_=0, to=100, width=400, progress_color='purple')
         self.slider.grid(row=2, column=0, columnspan=5)
+        self.slider.set(0)
 
         # Track elapsed time, track information, track length
         self.track_time = customtkinter.CTkLabel(master=self, text='0:00')
@@ -53,10 +61,8 @@ class Player(customtkinter.CTk):
         self.playlist_button.grid(row=4, column=0)
         self.back_button = customtkinter.CTkButton(master=self, text='Back', width=60)
         self.back_button.grid(row=4, column=1)
-        self.play_button = customtkinter.CTkButton(master=self, text='Play', width=60)
+        self.play_button = customtkinter.CTkButton(master=self, command=self.play_pause_button, text='Play', width=60)
         self.play_button.grid(row=4, column=2)
-        self.pause_button = customtkinter.CTkButton(master=self, text='Pause', width=60)
-        # self.pause_button.grid(row=3,column=0)
         self.skip_button = customtkinter.CTkButton(master=self, text='Skip', width=60)
         self.skip_button.grid(row=4, column=3)
         self.repeat_button = customtkinter.CTkButton(master=self, text='Repeat', width=60)
@@ -70,6 +76,16 @@ class Player(customtkinter.CTk):
             self.playlist_window.after(20, self.playlist_window.lift)
         else:
             self.playlist_window.focus()
+
+    def play_pause_button(self):
+        current_state = self.play_button.cget('text')
+        if current_state == 'Play':
+            self.play_button.configure(text='Pause')
+            pygame.mixer.music.unpause()
+        else:
+            self.play_button.configure(text='Play')
+            pygame.mixer.music.pause()
+
 
 
 if __name__ == "__main__":

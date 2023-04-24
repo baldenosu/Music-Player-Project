@@ -18,19 +18,32 @@ class Playlists(customtkinter.CTkToplevel):
 
         self.geometry('800x500')
         self.title('Playlists')
+        self.editor_window = None
 
+        # Playlists Frames containing playlist names and buttons for functions you can perform on the playlist.
         self.playlist_frame = PlaylistFrame(master=self)
         self.playlist_frame.grid(row=0, column=0)
 
         self.playlist_frame2 = PlaylistFrame(master=self)
         self.playlist_frame2.grid(row=1, column=0)
 
+        # Create a new Playlist button
+        self.create_playlist_button = customtkinter.CTkButton(master=self, command=self.create_playlist, text='Create Playlist')
+        self.create_playlist_button.grid(row=2, column=0, pady=10)
+
+    def create_playlist(self):
+        if self.editor_window is None or not self.editor_window.winfo_exists():
+            self.editor_window = PlaylistEditorUI.PlaylistEditor(self)
+            self.editor_window.after(20, self.editor_window.lift)
+        else:
+            self.editor_window.focus()
+
 
 class PlaylistFrame(customtkinter.CTkFrame):
     """
     Class for creating a single playlist inside a tkinter frame for adding to the list of playlists
     """
-    def __init__(self, master,):
+    def __init__(self, master):
         super().__init__(master)
 
         self.editor_window = None
