@@ -40,7 +40,7 @@ class Player(customtkinter.CTk):
         self.minsize(400, 400)
 
         # Load Images
-        self.album_image = customtkinter.CTkImage(light_image=Image.open('astleyAlbumArt.png'), size=(200, 200))
+        self.album_image = customtkinter.CTkImage(light_image=Image.open('cover.png'), size=(200, 200))
         # self.playlist_image = customtkinter.CTkImage(Image.open('Images/Playlists.png'), size=(28, 21))
         # self.back_image = customtkinter.CTkImage(Image.open('Images/Back.png'), size=(31, 22))
         # self.play_image = customtkinter.CTkImage(Image.open('Images/Play.png'), size=(29, 33))
