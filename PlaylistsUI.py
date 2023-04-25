@@ -47,6 +47,7 @@ class PlaylistFrame(customtkinter.CTkFrame):
         super().__init__(master)
 
         self.editor_window = None
+        self.delete_window = None
 
         # Playlist title
         self.playlist_name = customtkinter.CTkLabel(self, text='Playlist Name', width=500, height=50)
@@ -59,7 +60,7 @@ class PlaylistFrame(customtkinter.CTkFrame):
         self.edit_button = customtkinter.CTkButton(master=self, command=self.open_playlist_editor, text='Edit', width=60)
         self.edit_button.grid(row=0, column=2, padx=20)
         # Delete Button
-        self.delete_button = customtkinter.CTkButton(self, text='Delete', width=60)
+        self.delete_button = customtkinter.CTkButton(self, command=self.delete_playlist, text='Delete', width=60)
         self.delete_button.grid(row=0, column=3, padx=20)
 
     def open_playlist_editor(self):
@@ -68,4 +69,27 @@ class PlaylistFrame(customtkinter.CTkFrame):
             self.editor_window.after(20, self.editor_window.lift)
         else:
             self.editor_window.focus()
+
+    def delete_playlist(self):
+        delete_message = customtkinter.CTkInputDialog(text='Are you sure your want to delete this Playlist? Type "Yes" to continue', title='Warning: Deleting Playlist')
+        choice = delete_message.get_input()
+        if choice == 'Yes':
+            for widget in self.winfo_children():
+                widget.destroy()
+
+
+class DeleteWarning(customtkinter.CTkFrame):
+    def __init__(self, master):
+        super().__init__(master)
+
+        self.delete_message = customtkinter.CTkLabel(self, text='Are you sure you want to delete this Playlist?')
+        self.delete_message.grid(row=0)
+
+        self.yes_button = customtkinter.CTkButton(self, text='Yes')
+        self.yes_button.grid(row=0, column=0, padx=10, pady=10)
+
+        self.cancel_button = customtkinter.CTkButton(self, text='Cancel')
+        self.cancel_button.grid(row=0, column=1, padx=10, pady=10)
+
+
 
