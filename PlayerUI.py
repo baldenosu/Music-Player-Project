@@ -10,7 +10,15 @@ import customtkinter
 from PIL import Image
 import pygame
 from tinytag import TinyTag
+from tktooltip import ToolTip
 import PlaylistsUI
+import TrimmingToolUI
+import zmq
+
+context = zmq.Context()
+
+socket = context.socket(zmq.REQ)
+socket.connect("tcp://localhost:7854")
 
 customtkinter.set_appearance_mode('dark')
 
@@ -18,6 +26,11 @@ customtkinter.set_appearance_mode('dark')
 pygame.mixer.init()
 track = 'Griffin McElroy - Music from The Adventure Zone- Ethersea Vol. 1 - 01 The Adventure Zone- Ethersea - Main Theme.mp3'
 metadata = TinyTag.get(track, image=True)
+
+# Send track file path to microservice to get the metadata then retrieve it and store it for display
+socket.send_pyobj(track)
+track_title, track_album, track_artist, track_number = socket.recv_pyobj()
+
 pygame.mixer.music.load(track)
 pygame.mixer.music.play()
 pygame.mixer.music.pause()
@@ -27,7 +40,7 @@ class TrackInformation(customtkinter.CTkScrollableFrame):
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
 
-        self.track_info = customtkinter.CTkLabel(master=self, text=f'Song: {metadata.title} | Artist: {metadata.artist} | Album: {metadata.album}')
+        self.track_info = customtkinter.CTkLabel(master=self, text=f'Song: {track_title} | Artist: {track_artist} | Album: {track_album} | Track number: {track_number}')
         self.track_info.grid(row=1, column=0, columnspan=5)
 
 
@@ -50,7 +63,7 @@ class Player(customtkinter.CTk):
 
         # Advanced Tools Menu
         self.advanced_var = customtkinter.StringVar(value='Advanced Tools')
-        self.tools_menu = customtkinter.CTkOptionMenu(master=self, values=['Trimming Tool'], variable=self.advanced_var)
+        self.tools_menu = customtkinter.CTkOptionMenu(master=self, values=['Trimming Tool'], variable=self.advanced_var, command=self.tool_menu_control)
         self.tools_menu.grid(row=0, column=0, columnspan=2, padx=0, pady=(0, 10))
 
         # Album Art Image
@@ -84,7 +97,11 @@ class Player(customtkinter.CTk):
         self.repeat_button = customtkinter.CTkButton(master=self, text='Repeat', width=60)
         self.repeat_button.grid(row=5, column=4)
 
+        # Tooltips
+        self.playlist_tooltip = ToolTip(self.playlist_button, msg='Playlist Button tooltip message', delay=1.0)
+
         self.playlist_window = None
+        self.trimmer_window = None
 
     def open_playlists(self):
         if self.playlist_window is None or not self.playlist_window.winfo_exists():
@@ -101,6 +118,15 @@ class Player(customtkinter.CTk):
         else:
             self.play_button.configure(text='Play')
             pygame.mixer.music.pause()
+
+    def tool_menu_control(self, choice):
+        if choice == "Trimming Tool":
+            if self.trimmer_window is None or not self.trimmer_window.winfo_exists():
+                self.trimmer_window = TrimmingToolUI.TrimmingTool(self)
+                self.trimmer_window.after(20, self.trimmer_window.lift)
+            else:
+                self.trimmer_window.focus()
+
 
 
 

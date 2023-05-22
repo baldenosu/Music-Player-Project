@@ -32,6 +32,10 @@ class Playlists(customtkinter.CTkToplevel):
         self.create_playlist_button.grid(row=2, column=0, pady=10)
 
     def create_playlist(self):
+        create_message = customtkinter.CTkInputDialog(
+            text='Would you like me to walk you through the process of creating a Playlist?',
+            title='Creating New Playlist')
+        choice = create_message.get_input()
         if self.editor_window is None or not self.editor_window.winfo_exists():
             self.editor_window = PlaylistEditorUI.PlaylistEditor(self)
             self.editor_window.after(20, self.editor_window.lift)
