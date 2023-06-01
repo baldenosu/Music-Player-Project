@@ -32,6 +32,12 @@ class Playlists(customtkinter.CTkToplevel):
         self.create_playlist_button.grid(row=2, column=0, pady=10)
 
     def create_playlist(self):
+        """
+        Function for handling the opening of the playlist editor when the create playlist button is pressed. Also asks
+        the user if they would like help in creating the playlist
+
+        :return: None
+        """
         create_message = customtkinter.CTkInputDialog(
             text='Would you like me to walk you through the process of creating a Playlist?',
             title='Creating New Playlist')

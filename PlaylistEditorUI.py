@@ -5,11 +5,12 @@
 
 # Imports
 import customtkinter
+import os
 
 
 class PlaylistEditor(customtkinter.CTkToplevel):
     """
-    Class for creating a window instance of the playlists screen
+    Class for creating a window instance of the playlist Editor screen
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -22,8 +23,8 @@ class PlaylistEditor(customtkinter.CTkToplevel):
         self.playlist_label = customtkinter.CTkLabel(master=self, text='Playlist Name')
         self.playlist_label.grid(row=0, column=0, pady=10)
         self.playlist_name = customtkinter.CTkEntry(master=self, placeholder_text='Playlist 1')
-        self.playlist_name.grid(row=0, column=1,pady=10)
-        self.create_button = customtkinter.CTkButton(master=self, text='Create')
+        self.playlist_name.grid(row=0, column=1, pady=10)
+        self.create_button = customtkinter.CTkButton(master=self, command=self.build_playlist, text='Create')
         self.create_button.grid(row=0, column=2, pady=10)
 
         # Add Tracks
@@ -36,13 +37,31 @@ class PlaylistEditor(customtkinter.CTkToplevel):
         self.tracks_label = customtkinter.CTkLabel(master=self, text='Tracks')
         self.tracks_label.grid(row=2, column=0, pady=10)
 
-
         # Tracks list
         self.tracks_list = TracksListFrame(master=self, width=475, height=400)
         self.tracks_list.grid(row=3, column=0, columnspan=4)
 
+    def build_playlist(self):
+        """
+        function for building playlist based on the current tracklist. Saves the track files to a folder with the
+        name of the playlist stored in the playlist folder.
+
+        :return:
+        """
+        # Create a folder with the playlist name
+        playlist_name = self.playlist_name.get()
+        playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
+        playlist_location = playlists_folder_path + '/' + playlist_name
+        os.mkdir(playlist_location)
+        # grab all the track files from the tracklist and store them as files in the folder
+        # Give message that playlist was successfully created
+
 
 class TracksListFrame(customtkinter.CTkScrollableFrame):
+    """
+    Class for the frame that holds all the track information for the playlist being created. All stored in scrollable
+    frame if contents of playlist become to large for window.
+    """
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
         self.tracks = []
@@ -57,6 +76,9 @@ class TracksListFrame(customtkinter.CTkScrollableFrame):
 
 
 class TrackFrame(customtkinter.CTkFrame):
+    """
+    Class for individual track frame to be stored in the tracklist frame
+    """
     def __init__(self, master, track_num: int, **kwargs):
         super().__init__(master, **kwargs)
 
@@ -78,10 +100,15 @@ class TrackFrame(customtkinter.CTkFrame):
         self.track_length.grid(row=0, column=3, padx=10)
 
         # Delete Button
-        self.delete_button = customtkinter.CTkButton(self, command=self.delete_track,text='Delete', width=60)
+        self.delete_button = customtkinter.CTkButton(self, command=self.delete_track, text='Delete', width=60)
         self.delete_button.grid(row=0, column=4, padx=10)
 
     def delete_track(self):
+        """
+        Function that deletes a track from the track list
+
+        :return: None
+        """
         for widget in self.winfo_children():
             widget.destroy()
 

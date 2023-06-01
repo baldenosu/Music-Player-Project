@@ -11,7 +11,7 @@ from PlayerUI import TrackInformation
 # from PIL import Image
 
 pygame.mixer.init()
-track = 'Griffin McElroy - Music from The Adventure Zone- Ethersea Vol. 1 - 01 The Adventure Zone- Ethersea - Main Theme.mp3'
+track = 'Main Theme.mp3'
 metadata = TinyTag.get(track, image=True)
 
 
