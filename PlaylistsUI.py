@@ -26,7 +26,7 @@ class Playlists(customtkinter.CTkToplevel):
         with os.scandir(playlists_folder_path) as playlists_folder:
             for folder in playlists_folder:
                 if folder.is_dir():
-                    playlist = PlaylistFrame(master=self, playlist_name=folder.name, queue_playlist=queue_playlist)
+                    playlist = PlaylistFrame(master=self, playlist_name=folder.name, queue_playlist=queue_playlist, close_window=self.close_window)
                     self.playlists.append(playlist)
                     playlist.grid(row=len(self.playlists)+1, column=0)
 
@@ -51,17 +51,25 @@ class Playlists(customtkinter.CTkToplevel):
         else:
             self.editor_window.focus()
 
+    def close_window(self):
+        """
+        Function to close window when playlist is selected to play.
+        :return:
+        """
+        self.destroy()
+
 
 class PlaylistFrame(customtkinter.CTkFrame):
     """
     Class for creating a single playlist inside a tkinter frame for adding to the list of playlists
     """
-    def __init__(self, master, playlist_name: str, queue_playlist):
+    def __init__(self, master, playlist_name: str, queue_playlist, close_window):
         super().__init__(master)
 
         self.editor_window = None
         self.delete_window = None
         self.queue_playlist = queue_playlist
+        self.close_window = close_window
 
         # Playlist title
         self.playlist_name = playlist_name
@@ -92,6 +100,7 @@ class PlaylistFrame(customtkinter.CTkFrame):
         # call the queuing function to transfer the playlist over to the main player
         self.queue_playlist(playlist_name)
         # close the playlist window
+        self.close_window()
 
     def open_playlist_editor(self):
         """

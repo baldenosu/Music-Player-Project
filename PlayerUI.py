@@ -28,16 +28,8 @@ customtkinter.set_appearance_mode('dark')
 
 # Setup Sound control
 pygame.mixer.init()
-track = 'Main Theme.mp3'
-metadata = TinyTag.get(track, image=True)
 
-# Send track file path to microservice to get the metadata then retrieve it and store it for display
-socket.send_pyobj(track)
-track_title, track_album, track_artist, track_number = socket.recv_pyobj()
 
-pygame.mixer.music.load(track)
-pygame.mixer.music.play()
-pygame.mixer.music.pause()
 
 
 class TrackInformation(customtkinter.CTkScrollableFrame):
@@ -45,11 +37,14 @@ class TrackInformation(customtkinter.CTkScrollableFrame):
     Class for the frame that contains track data including track title, artist, album, made scrollable for when metadata
     does not fit in window.
     """
-    def __init__(self, master, **kwargs):
+    def __init__(self,  master, track_title='none', track_artist='none', track_album='none', track_number='none', **kwargs):
         super().__init__(master, **kwargs)
 
         self.track_info = customtkinter.CTkLabel(master=self, text=f'Song: {track_title} | Artist: {track_artist} | Album: {track_album} | Track number: {track_number}')
         self.track_info.grid(row=1, column=0, columnspan=5)
+
+    def update_information(self, track_title, track_artist, track_album, track_number):
+        self.track_info.configure(text=f'Song: {track_title} | Artist: {track_artist} | Album: {track_album} | Track number: {track_number}')
 
 
 class Player(customtkinter.CTk):
@@ -62,6 +57,9 @@ class Player(customtkinter.CTk):
         self.geometry('400x400')
         self.title('Music Player')
         self.minsize(400, 400)
+
+        self.queued_tracks = []
+        self.current_playlist = ''
 
         # Load Images
         self.album_image = customtkinter.CTkImage(light_image=Image.open('cover.png'), size=(200, 200))
@@ -91,8 +89,8 @@ class Player(customtkinter.CTk):
         self.slider.set(0)
 
         # Track elapsed time, track information, track length
-        self.track_time = customtkinter.CTkLabel(master=self, text=f'{pygame.mixer.music.get_pos()}')
-        self.track_length = customtkinter.CTkLabel(master=self, text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):2d}')
+        self.track_time = customtkinter.CTkLabel(master=self, text='0:00')
+        self.track_length = customtkinter.CTkLabel(master=self, text='0:00')
         self.track_time.grid(row=4, column=0)
         self.track_length.grid(row=4, column=4)
 
@@ -162,15 +160,42 @@ class Player(customtkinter.CTk):
         playback.
 
         :param playlist: The name of the playlist to find and queue up for playback
+
         :return: None
         """
         # get the name of the folder for the playlist
+        playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
+        queue_playlist_path = playlists_folder_path + '/' + playlist
         # put the tracks in an array
-        # play the songs one by one
+        with os.scandir(queue_playlist_path) as playlist_tracks:
+            for track in playlist_tracks:
+                if track.is_file():
+                    self.queued_tracks.append(track)
+        self.current_playlist = playlist
+        self.current_track_playing()
 
+    def current_track_playing(self):
+        """
+        Function to facilitate the playing of songs from playlist in the main player.
+        :return:
+        """
+        # get the song from the playlist array
+        current_track = self.queued_tracks[0]
+        metadata = TinyTag.get(current_track, image=True)
+        # Send track file path to microservice to get the metadata then retrieve it and store it for display
+        playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
+        socket.send_pyobj(playlists_folder_path + '/' + self.current_playlist + '/' + current_track.name)
+        track_title, track_album, track_artist, track_number = socket.recv_pyobj()
 
+        # update the music mixer
+        pygame.mixer.music.load(current_track)
+        pygame.mixer.music.play()
+        pygame.mixer.music.pause()
 
-
+        # update the UI
+        self.track_info.update_information(track_title, track_artist, track_album, track_number)
+        self.track_time.configure(text=f'{pygame.mixer.music.get_pos()}')
+        self.track_length.configure(text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):2d}')
 
 
 if __name__ == "__main__":
