@@ -4,8 +4,10 @@
 # Description: User Interface for the player window of the music player app.
 
 # code citations : https://customtkinter.tomschimansky.com/documentation/
+# Help with transferring data between windows: https://www.youtube.com/watch?v=wHeoWM4xv0U
 
 # Imports
+import os
 import customtkinter
 from PIL import Image
 import pygame
@@ -112,18 +114,6 @@ class Player(customtkinter.CTk):
         self.playlist_window = None
         self.trimmer_window = None
 
-    def open_playlists(self):
-        """
-        function that opens the playlists window when the playlist button is pressed
-
-        :return: None
-        """
-        if self.playlist_window is None or not self.playlist_window.winfo_exists():
-            self.playlist_window = PlaylistsUI.Playlists(self)
-            self.playlist_window.after(20, self.playlist_window.lift)
-        else:
-            self.playlist_window.focus()
-
     def play_pause_button(self):
         """
         Function for pausing and unpausing the track when the play/pause button is pressed, this also changes the button
@@ -153,6 +143,32 @@ class Player(customtkinter.CTk):
                 self.trimmer_window.after(20, self.trimmer_window.lift)
             else:
                 self.trimmer_window.focus()
+
+    def open_playlists(self):
+        """
+        function that opens the playlists window when the playlist button is pressed
+
+        :return: None
+        """
+        if self.playlist_window is None or not self.playlist_window.winfo_exists():
+            self.playlist_window = PlaylistsUI.Playlists(self.queue_playlist)
+            self.playlist_window.after(20, self.playlist_window.lift)
+        else:
+            self.playlist_window.focus()
+
+    def queue_playlist(self, playlist):
+        """
+        Function for transitioning playlist from playlist window to main player and queuing up the playlist for
+        playback.
+
+        :param playlist: The name of the playlist to find and queue up for playback
+        :return: None
+        """
+        # get the name of the folder for the playlist
+        # put the tracks in an array
+        # play the songs one by one
+
+
 
 
 

@@ -6,6 +6,9 @@
 # Imports
 import customtkinter
 import os
+import shutil
+from tkinter import filedialog
+from tinytag import TinyTag
 
 
 class PlaylistEditor(customtkinter.CTkToplevel):
@@ -27,12 +30,6 @@ class PlaylistEditor(customtkinter.CTkToplevel):
         self.create_button = customtkinter.CTkButton(master=self, command=self.build_playlist, text='Create')
         self.create_button.grid(row=0, column=2, pady=10)
 
-        # Add Tracks
-        self.add_tracks_label = customtkinter.CTkLabel(master=self, text='Add Tracks')
-        self.add_tracks_label.grid(row=1, column=0, pady=10)
-        self.add_tracks_button = customtkinter.CTkButton(master=self, text='Chose File')
-        self.add_tracks_button.grid(row=1, column=1, pady=10)
-
         # Tracks List label
         self.tracks_label = customtkinter.CTkLabel(master=self, text='Tracks')
         self.tracks_label.grid(row=2, column=0, pady=10)
@@ -40,6 +37,12 @@ class PlaylistEditor(customtkinter.CTkToplevel):
         # Tracks list
         self.tracks_list = TracksListFrame(master=self, width=475, height=400)
         self.tracks_list.grid(row=3, column=0, columnspan=4)
+
+        # Add Tracks
+        self.add_tracks_label = customtkinter.CTkLabel(master=self, text='Add Tracks')
+        self.add_tracks_label.grid(row=1, column=0, pady=10)
+        self.add_tracks_button = customtkinter.CTkButton(master=self, command=self.tracks_list.add_track, text='Choose File')
+        self.add_tracks_button.grid(row=1, column=1, pady=10)
 
     def build_playlist(self):
         """
@@ -54,7 +57,12 @@ class PlaylistEditor(customtkinter.CTkToplevel):
         playlist_location = playlists_folder_path + '/' + playlist_name
         os.mkdir(playlist_location)
         # grab all the track files from the tracklist and store them as files in the folder
+        playlist_tracks = self.tracks_list.get_tracks()
+        for filename in playlist_tracks:
+            if os.path.isfile(filename):
+                shutil.copy(filename, playlist_location)
         # Give message that playlist was successfully created
+        playlist_built_message = customtkinter.CTkInputDialog(text='Playlist built successfully, you may close this window', title='Message Playlist Created')
 
 
 class TracksListFrame(customtkinter.CTkScrollableFrame):
@@ -64,40 +72,66 @@ class TracksListFrame(customtkinter.CTkScrollableFrame):
     """
     def __init__(self, master, **kwargs):
         super().__init__(master, **kwargs)
+        # Create a list for holding the songs in the playlist
         self.tracks = []
 
         self.columnconfigure(0, weight=1)
 
-        # Frame to hold tracks information for the playlist
-        for i in range(10):
-            track = TrackFrame(master=self, track_num= i+1)
-            track.grid(row=i, column=0, pady=10)
-            self.tracks.append(track)
+    def add_track(self):
+        """
+        Function for adding a track file to the track list.
+
+        :return: None
+        """
+        track_file = filedialog.askopenfilename()
+        self.focus()
+        metadata = TinyTag.get(track_file)
+        new_track = TrackFrame(master=self, track_file=track_file,track_num=len(self.tracks)+1, metadata=metadata)
+        self.tracks.append(new_track)
+        new_track.grid(row=len(self.tracks), column=0, pady=10)
+
+    def get_tracks(self):
+        """
+        Gets the list of track files from the tracklist frame for use in creating the playlist
+
+        :return: list of tracks
+        """
+        track_files = []
+        for track in self.tracks:
+            track_files.append(track.get_track_file())
+        return track_files
 
 
 class TrackFrame(customtkinter.CTkFrame):
     """
     Class for individual track frame to be stored in the tracklist frame
     """
-    def __init__(self, master, track_num: int, **kwargs):
+    def __init__(self, master, track_file: str, track_num: int, metadata: object, **kwargs):
         super().__init__(master, **kwargs)
+
+        self.grid_columnconfigure((1, 2), weight=1)
+
+        self.track_file = track_file
 
         # Track Number
         self.track_number = track_num
         self.track_number_label = customtkinter.CTkLabel(self, text=track_num)
-        self.track_number_label.grid(row=0, column=0)
+        self.track_number_label.grid(row=0, column=0, padx=5, sticky="ew")
 
         # Track Name
-        self.track_name = customtkinter.CTkLabel(self, text='track name')
-        self.track_name.grid(row=0, column=1, padx=10)
+        self.track_name = metadata.title
+        self.track_name_label = customtkinter.CTkLabel(self, text=self.track_name)
+        self.track_name_label.grid(row=0, column=1)
 
         # Artist
-        self.artist = customtkinter.CTkLabel(self, text='Artist Name')
-        self.artist.grid(row=0, column=2, padx=10)
+        self.artist = metadata.artist
+        self.artist_label = customtkinter.CTkLabel(self, text=self.artist)
+        self.artist_label.grid(row=0, column=2, padx=10)
 
         # Length
-        self.track_length = customtkinter.CTkLabel(self, text='5:00')
-        self.track_length.grid(row=0, column=3, padx=10)
+        self.track_length = metadata.duration
+        self.track_length_label = customtkinter.CTkLabel(self, text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):2d}')
+        self.track_length_label.grid(row=0, column=3, padx=10)
 
         # Delete Button
         self.delete_button = customtkinter.CTkButton(self, command=self.delete_track, text='Delete', width=60)
@@ -111,6 +145,13 @@ class TrackFrame(customtkinter.CTkFrame):
         """
         for widget in self.winfo_children():
             widget.destroy()
+
+    def get_track_file(self):
+        """
+        Function to retrieve the file for the track
+        :return: track file location
+        """
+        return self.track_file
 
 
 
