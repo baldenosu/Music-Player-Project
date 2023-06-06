@@ -28,8 +28,7 @@ customtkinter.set_appearance_mode('dark')
 
 # Setup Sound control
 pygame.mixer.init()
-
-
+pygame.init()
 
 
 class TrackInformation(customtkinter.CTkScrollableFrame):
@@ -60,6 +59,11 @@ class Player(customtkinter.CTk):
 
         self.queued_tracks = []
         self.current_playlist = ''
+        self.track_number_playing = 0
+
+        # Set music end
+        self.MUSIC_END = pygame.USEREVENT + 1
+        pygame.mixer.music.set_endevent(self.MUSIC_END)
 
         # Load Images
         self.album_image = customtkinter.CTkImage(light_image=Image.open('cover.png'), size=(200, 200))
@@ -112,6 +116,8 @@ class Player(customtkinter.CTk):
         self.playlist_window = None
         self.trimmer_window = None
 
+        self.start_next_track()
+
     def play_pause_button(self):
         """
         Function for pausing and unpausing the track when the play/pause button is pressed, this also changes the button
@@ -119,13 +125,40 @@ class Player(customtkinter.CTk):
 
         :return: None
         """
-        current_state = self.play_button.cget('image')
-        if current_state == self.play_image:
+        if self.play_button.cget('image') == self.play_image:
             self.play_button.configure(image=self.pause_image, text='', height=60, width=60)
             pygame.mixer.music.unpause()
+            self.current_time()
         else:
             self.play_button.configure(image=self.play_image, text='', height=60, width=60)
             pygame.mixer.music.pause()
+
+    def current_time(self):
+        """
+        Function for updating the current time location in the track for the UI time and slider
+
+        :return: None
+        """
+        # get the current position of the track in milliseconds and format it to something more readable
+        current_time = pygame.mixer.music.get_pos()/1000
+        self.slider.set(int(current_time))
+        formatted_time = f'{int(current_time//60)}:{int(current_time%60):02d}'
+        self.track_time.configure(text=formatted_time)
+        # continue tracking the time as long as the track is playing
+        if self.play_button.cget('image') == self.pause_image:
+            self.after(1000, self.current_time)
+
+    def start_next_track(self):
+        """
+        Function to monitor when a track ends and start the next track in a playlist
+        :return: None
+        """
+        # if the get position is at the end of the song call
+        for event in pygame.event.get():
+            if event.type == self.MUSIC_END:
+                self.current_track_playing()
+                pygame.mixer.music.unpause()
+        self.after(1000, self.start_next_track)
 
     def tool_menu_control(self, choice):
         """
@@ -180,8 +213,10 @@ class Player(customtkinter.CTk):
         :return:
         """
         # get the song from the playlist array
-        current_track = self.queued_tracks[0]
+        current_track = self.queued_tracks[self.track_number_playing]
         metadata = TinyTag.get(current_track, image=True)
+        self.track_number_playing += 1
+
         # Send track file path to microservice to get the metadata then retrieve it and store it for display
         playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
         socket.send_pyobj(playlists_folder_path + '/' + self.current_playlist + '/' + current_track.name)
@@ -193,8 +228,9 @@ class Player(customtkinter.CTk):
         pygame.mixer.music.pause()
 
         # update the UI
+        self.slider.configure(number_of_steps=int(metadata.duration), to=int(metadata.duration))
         self.track_info.update_information(track_title, track_artist, track_album, track_number)
-        self.track_time.configure(text=f'{pygame.mixer.music.get_pos()}')
+        self.track_time.configure(text=f'0:00')
         self.track_length.configure(text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):2d}')
 
 
