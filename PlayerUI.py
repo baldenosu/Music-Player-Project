@@ -60,10 +60,16 @@ class Player(customtkinter.CTk):
         self.queued_tracks = []
         self.current_playlist = ''
         self.track_number_playing = 0
+        self.track_position = 0
 
         # Set music end
         self.MUSIC_END = pygame.USEREVENT + 1
         pygame.mixer.music.set_endevent(self.MUSIC_END)
+
+        # for recurring functions
+        self.after_current_time_id = None
+        self.after_track_slide_id = None
+        self.after_start_next_track_id = None
 
         # Load Images
         self.album_image = customtkinter.CTkImage(light_image=Image.open('cover.png'), size=(200, 200))
@@ -140,34 +146,54 @@ class Player(customtkinter.CTk):
 
         :return: None
         """
+        # Stop any unnecessary calls to the function
+        if self.after_current_time_id is not None:
+            self.after_cancel(self.after_current_time_id)
+            self.after_current_time_id = None
         # get the current position of the track in milliseconds and format it to something more readable
-        current_time = pygame.mixer.music.get_pos()/1000
-        self.slider.set(int(current_time))
-        print(int(current_time))
-        formatted_time = f'{int(current_time//60)}:{int(current_time%60):02d}'
+        self.track_position = self.track_position + 1
+        self.slider.set(int(self.track_position))
+        formatted_time = f'{int(self.track_position//60)}:{int(self.track_position%60):02d}'
         self.track_time.configure(text=formatted_time)
         # continue tracking the time as long as the track is playing
         if self.play_button.cget('image') == self.pause_image:
-            self.after(1000, self.current_time)
+            self.after_current_time_id = self.after(1000, self.current_time)
 
     def track_slide(self):
+        """
+        Function for moving the position of the track by moving the position of the track slider
+
+        :return: None
+        """
+        # Stop any unnecessary calls to the function
+        if self.after_track_slide_id is not None:
+            self.after_cancel(self.after_track_slide_id)
+            self.after_track_slide_id = None
+        # When the track is playing if the slider position is different from the position of the song move to that position in the track.
         if self.play_button.cget('image') == self.pause_image:
-            if self.slider.get() != int(pygame.mixer.music.get_pos()/1000):
+            if self.slider.get() != int(self.track_position):
                 pygame.mixer.music.set_pos(self.slider.get())
-                self.slider.set(pygame.mixer.music.get_pos()/1000)
-        self.after(1000, self.track_slide)
+                self.track_position = self.slider.get()
+                self.slider.set(self.track_position)
+        self.after_track_slide_id = self.after(1000, self.track_slide)
 
     def start_next_track(self):
         """
         Function to monitor when a track ends and start the next track in a playlist
         :return: None
         """
+        # Stop any unnecessary calls to the function
+        if self.after_start_next_track_id is not None:
+            self.after_cancel(self.after_start_next_track_id)
+            self.after_start_next_track_id = None
         # if the get position is at the end of the song call
         for event in pygame.event.get():
             if event.type == self.MUSIC_END:
                 self.current_track_playing()
+                self.track_position = 0
+                self.slider.set(self.track_position)
                 pygame.mixer.music.unpause()
-        self.after(1000, self.start_next_track)
+        self.after_start_next_track_id = self.after(1000, self.start_next_track)
 
     def tool_menu_control(self, choice):
         """
