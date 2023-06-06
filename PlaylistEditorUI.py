@@ -40,7 +40,7 @@ class PlaylistEditor(customtkinter.CTkToplevel):
         self.tracks_list = TracksListFrame(master=self, width=475, height=400)
         self.tracks_list.grid(row=3, column=0, columnspan=4)
 
-        # Add Tracks
+        # Add Tracks system
         self.add_tracks_label = customtkinter.CTkLabel(master=self, text='Add Tracks')
         self.add_tracks_label.grid(row=1, column=0, pady=10)
         self.add_tracks_button = customtkinter.CTkButton(master=self, command=self.tracks_list.add_track, text='Choose File')
@@ -51,7 +51,7 @@ class PlaylistEditor(customtkinter.CTkToplevel):
         function for building playlist based on the current tracklist. Saves the track files to a folder with the
         name of the playlist stored in the playlist folder.
 
-        :return:
+        :return: None
         """
         # Create a folder with the playlist name
         playlist_name = self.playlist_name.get()
@@ -97,7 +97,7 @@ class TracksListFrame(customtkinter.CTkScrollableFrame):
         """
         Gets the list of track files from the tracklist frame for use in creating the playlist
 
-        :return: list of tracks
+        :return: track_files a list of track files for the playlist
         """
         track_files = []
         for track in self.tracks:
@@ -153,6 +153,7 @@ class TrackFrame(customtkinter.CTkFrame):
     def get_track_file(self):
         """
         Function to retrieve the file for the track
+
         :return: track file location
         """
         return self.track_file

@@ -64,6 +64,7 @@ class Playlists(customtkinter.CTkToplevel):
     def close_window(self):
         """
         Function to close window when playlist is selected to play.
+
         :return:
         """
         self.destroy()
@@ -116,6 +117,7 @@ class PlaylistFrame(customtkinter.CTkFrame):
         """
         Function to facilitate opening the playlist editor window when the edit button is
         clicked.
+
         :return: None
         """
         if self.editor_window is None or not self.editor_window.winfo_exists():
@@ -143,21 +145,7 @@ class PlaylistFrame(customtkinter.CTkFrame):
             self.destroy()
 
 
-class DeleteWarning(customtkinter.CTkFrame):
-    """
-    Class for creating a warning window when the delete button is pressed for deletion of a playlist.
-    """
-    def __init__(self, master):
-        super().__init__(master)
 
-        self.delete_message = customtkinter.CTkLabel(self, text='Are you sure you want to delete this Playlist?')
-        self.delete_message.grid(row=0)
-
-        self.yes_button = customtkinter.CTkButton(self, text='Yes')
-        self.yes_button.grid(row=0, column=0, padx=10, pady=10)
-
-        self.cancel_button = customtkinter.CTkButton(self, text='Cancel')
-        self.cancel_button.grid(row=0, column=1, padx=10, pady=10)
 
 
 

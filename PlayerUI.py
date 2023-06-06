@@ -43,6 +43,16 @@ class TrackInformation(customtkinter.CTkScrollableFrame):
         self.track_info.grid(row=1, column=0, columnspan=5)
 
     def update_information(self, track_title, track_artist, track_album, track_number):
+        """
+        Function to update the UI with metadata from the current track playing
+
+        :param track_title: string with title of the track
+        :param track_artist: string with the name of the track artist
+        :param track_album:  string with the title of the album the track is from
+        :param track_number: int with the number of the track on the playlist
+
+        :return: None
+        """
         self.track_info.configure(text=f'Song: {track_title} | Artist: {track_artist} | Album: {track_album} | Track number: {track_number}')
 
 
@@ -180,7 +190,8 @@ class Player(customtkinter.CTk):
     def skip_track(self):
         """
         Function to skip the current track and move to the next track in the playlist
-        :return:
+
+        :return: None
         """
         self.track_number_playing += 1
         self.current_track_playing()
@@ -189,7 +200,8 @@ class Player(customtkinter.CTk):
     def previous_track(self):
         """
         Function to move playback to the previous track in the playlist
-        :return:
+
+        :return: None
         """
         self.track_number_playing -= 1
         self.current_track_playing()
@@ -211,6 +223,7 @@ class Player(customtkinter.CTk):
     def start_next_track(self):
         """
         Function to monitor when a track ends and start the next track in a playlist
+
         :return: None
         """
         # Stop any unnecessary calls to the function
@@ -260,7 +273,8 @@ class Player(customtkinter.CTk):
     def current_track_playing(self):
         """
         Function to facilitate the playing of songs from playlist in the main player.
-        :return:
+
+        :return: None
         """
         # get the song from the playlist array, check if end of the playlist, stop if so otherwise play next track
         if self.track_number_playing >= len(self.queued_tracks) and self.repeat_toggle is False:
@@ -270,7 +284,6 @@ class Player(customtkinter.CTk):
             self.track_number_playing = 0
         current_track = self.queued_tracks[self.track_number_playing]
         metadata = TinyTag.get(current_track, image=True)
-
 
         # Send track file path to microservice to get the metadata then retrieve it and store it for display
         playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
@@ -310,7 +323,7 @@ class Player(customtkinter.CTk):
         """
         Function to stop playback when the player reaches the end of the tracks in the playlist.
 
-        :return:
+        :return: None
         """
         self.current_playlist = None
         # update the UI
