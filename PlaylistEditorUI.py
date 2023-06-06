@@ -1,7 +1,7 @@
 # Author: James Balden
 # GitHub username: baldenosu
 # Date: 4/24/2023
-# Description: User Interface for the Playlist Editor Window for creating playlists
+# Description: User Interface for the Playlist Editor Window for creating playlists as part of the music player project.
 
 # Imports
 import customtkinter
@@ -145,6 +145,7 @@ class TrackFrame(customtkinter.CTkFrame):
         """
         for widget in self.winfo_children():
             widget.destroy()
+        self.destroy()
 
     def get_track_file(self):
         """

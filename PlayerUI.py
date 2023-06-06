@@ -14,7 +14,6 @@ import pygame
 from tinytag import TinyTag
 from tktooltip import ToolTip
 import PlaylistsUI
-import TrimmingToolUI
 import zmq
 
 # Set up for communication with metadata microservice
@@ -58,7 +57,7 @@ class Player(customtkinter.CTk):
         self.minsize(400, 400)
 
         self.queued_tracks = []
-        self.current_playlist = ''
+        self.current_playlist = None
         self.track_number_playing = 0
         self.track_position = 0
 
@@ -72,7 +71,7 @@ class Player(customtkinter.CTk):
         self.after_start_next_track_id = None
 
         # Load Images
-        self.album_image = customtkinter.CTkImage(light_image=Image.open('cover.png'), size=(200, 200))
+        self.album_image = customtkinter.CTkImage(dark_image=Image.open('MUSIC PLAYER.png'), size=(200, 200))
         self.playlist_image = customtkinter.CTkImage(Image.open('Images/Playlists.png'), size=(28, 21))
         self.back_image = customtkinter.CTkImage(Image.open('Images/Back.png'), size=(31, 22))
         self.play_image = customtkinter.CTkImage(Image.open('Images/Play.png'), size=(29, 33))
@@ -80,17 +79,12 @@ class Player(customtkinter.CTk):
         self.skip_image = customtkinter.CTkImage(Image.open('Images/Skip.png'), size=(31, 22))
         self.repeat_image = customtkinter.CTkImage(Image.open('Images/Repeat.png'), size=(31, 22))
 
-        # Advanced Tools Menu
-        self.advanced_var = customtkinter.StringVar(value='Advanced Tools')
-        self.tools_menu = customtkinter.CTkOptionMenu(master=self, values=['Trimming Tool'], variable=self.advanced_var, command=self.tool_menu_control)
-        self.tools_menu.grid(row=0, column=0, columnspan=2, padx=0, pady=(0, 10))
-
         # Album Art Image
         self.album_art_label = customtkinter.CTkLabel(master=self, text='', image=self.album_image)
-        self.album_art_label.grid(row=1, column=0, columnspan=5)
+        self.album_art_label.grid(row=1, column=0, columnspan=5, pady=(25, 5))
 
         # Track Information
-        self.track_info = TrackInformation(master=self, width=300, height=25, orientation='horizontal')
+        self.track_info = TrackInformation(master=self, width=350, height=25, orientation='horizontal')
         self.track_info.grid(row=2, column=0, columnspan=5)
 
         # Track Slider
@@ -161,7 +155,8 @@ class Player(customtkinter.CTk):
 
     def track_slide(self):
         """
-        Function for moving the position of the track by moving the position of the track slider
+        Function for moving the position of the track by moving the position of the track slider. This allows for the
+        user to adjust the point in the track at which playback is happening.
 
         :return: None
         """
@@ -190,25 +185,8 @@ class Player(customtkinter.CTk):
         for event in pygame.event.get():
             if event.type == self.MUSIC_END:
                 self.current_track_playing()
-                self.track_position = 0
-                self.slider.set(self.track_position)
                 pygame.mixer.music.unpause()
         self.after_start_next_track_id = self.after(1000, self.start_next_track)
-
-    def tool_menu_control(self, choice):
-        """
-        Function for controlling tool menu UI. Opens correct tool window based on user input click.
-
-        :param choice: Clicked button in the tool selection menu
-
-        :return: None
-        """
-        if choice == "Trimming Tool":
-            if self.trimmer_window is None or not self.trimmer_window.winfo_exists():
-                self.trimmer_window = TrimmingToolUI.TrimmingTool(self)
-                self.trimmer_window.after(20, self.trimmer_window.lift)
-            else:
-                self.trimmer_window.focus()
 
     def open_playlists(self):
         """
@@ -247,7 +225,10 @@ class Player(customtkinter.CTk):
         Function to facilitate the playing of songs from playlist in the main player.
         :return:
         """
-        # get the song from the playlist array
+        # get the song from the playlist array, check if end of the playlist, stop if so otherwise play next track
+        if self.track_number_playing >= len(self.queued_tracks):
+            self.end_playlist()
+            return
         current_track = self.queued_tracks[self.track_number_playing]
         metadata = TinyTag.get(current_track, image=True)
         self.track_number_playing += 1
@@ -264,9 +245,23 @@ class Player(customtkinter.CTk):
 
         # update the UI
         self.slider.configure(number_of_steps=int(metadata.duration), to=int(metadata.duration))
+        self.track_position = 0
+        self.slider.set(self.track_position)
         self.track_info.update_information(track_title, track_artist, track_album, track_number)
         self.track_time.configure(text=f'0:00')
         self.track_length.configure(text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):2d}')
+
+    def end_playlist(self):
+        # update the UI
+        self.play_button.configure(image=self.play_image, text='', height=60, width=60)
+        pygame.mixer.music.pause()
+        self.slider.configure(number_of_steps=100)
+        self.track_position = 0
+        self.slider.set(self.track_position)
+        self.track_info.update_information(track_title='none', track_artist='none', track_album='none', track_number='none')
+        self.track_time.configure(text=f'0:00')
+        self.track_length.configure(text=f'0:00')
+
 
 
 if __name__ == "__main__":

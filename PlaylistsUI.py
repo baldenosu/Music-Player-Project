@@ -1,10 +1,12 @@
 # Author: James Balden
 # GitHub username: baldenosu
 # Date: 4/24/2023
-# Description: User interface for the playlists window
+# Description: User interface for the playlists window, part of the music player project. Users can play, edit, and
+# delete playlists.
 
 # Imports
 import os
+import shutil
 import customtkinter
 import PlaylistEditorUI
 
@@ -122,9 +124,15 @@ class PlaylistFrame(customtkinter.CTkFrame):
         """
         delete_message = customtkinter.CTkInputDialog(text='Are you sure you want to delete this Playlist? Type "Yes" to continue', title='Warning: Deleting Playlist')
         choice = delete_message.get_input()
+        # Delete the directory and all its tracks from the playlist directory and remove widgets from frame.
         if choice == 'Yes':
+            playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
+            playlist_name = self.playlist_name
+            playlist_location = playlists_folder_path + '/' + playlist_name
+            shutil.rmtree(playlist_location)
             for widget in self.winfo_children():
                 widget.destroy()
+            self.destroy()
 
 
 class DeleteWarning(customtkinter.CTkFrame):
