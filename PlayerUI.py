@@ -2,7 +2,7 @@
 # GitHub username: baldenosu
 # Date: 4/22/2023
 # Description: User Interface for the player window of the music player app.
-
+import io
 # code citations : https://customtkinter.tomschimansky.com/documentation/
 # Help with transferring data between windows: https://www.youtube.com/watch?v=wHeoWM4xv0U
 
@@ -23,6 +23,7 @@ socket = context.socket(zmq.REQ)
 socket.connect("tcp://localhost:7854")
 
 # Set up for UI appearance
+customtkinter.set_default_color_theme('player-theme.json')
 customtkinter.set_appearance_mode('dark')
 
 # Setup Sound control
@@ -56,10 +57,12 @@ class Player(customtkinter.CTk):
         self.title('Music Player')
         self.minsize(400, 400)
 
+        # Playback variables
         self.queued_tracks = []
         self.current_playlist = None
         self.track_number_playing = 0
         self.track_position = 0
+        self.repeat_toggle = False
 
         # Set music end
         self.MUSIC_END = pygame.USEREVENT + 1
@@ -88,7 +91,7 @@ class Player(customtkinter.CTk):
         self.track_info.grid(row=2, column=0, columnspan=5)
 
         # Track Slider
-        self.slider = customtkinter.CTkSlider(master=self, from_=0, to=100, width=400, progress_color='purple')
+        self.slider = customtkinter.CTkSlider(master=self, from_=0, to=100, width=400)
         self.slider.grid(row=3, column=0, columnspan=5)
         self.slider.set(0)
 
@@ -101,13 +104,13 @@ class Player(customtkinter.CTk):
         # Player Button Controls
         self.playlist_button = customtkinter.CTkButton(master=self, command=self.open_playlists, image=self.playlist_image, text='', height=60, width=60)
         self.playlist_button.grid(row=5, column=0)
-        self.back_button = customtkinter.CTkButton(master=self, image=self.back_image, text='', height=60, width=60)
+        self.back_button = customtkinter.CTkButton(master=self, command=self.previous_track,image=self.back_image, text='', height=60, width=60)
         self.back_button.grid(row=5, column=1)
         self.play_button = customtkinter.CTkButton(master=self, command=self.play_pause_button, image=self.play_image, text='', height=60, width=60)
         self.play_button.grid(row=5, column=2)
-        self.skip_button = customtkinter.CTkButton(master=self, image=self.skip_image, text='', height=60, width=60)
+        self.skip_button = customtkinter.CTkButton(master=self, command=self.skip_track,image=self.skip_image, text='', height=60, width=60)
         self.skip_button.grid(row=5, column=3)
-        self.repeat_button = customtkinter.CTkButton(master=self, image=self.repeat_image, text='', height=60, width=60)
+        self.repeat_button = customtkinter.CTkButton(master=self, command=self.toggle_repeat_playlist,image=self.repeat_image, text='', height=60, width=60)
         self.repeat_button.grid(row=5, column=4)
 
         # Tooltips
@@ -126,6 +129,8 @@ class Player(customtkinter.CTk):
 
         :return: None
         """
+        if self.current_playlist is None:
+            return
         if self.play_button.cget('image') == self.play_image:
             self.play_button.configure(image=self.pause_image, text='', height=60, width=60)
             pygame.mixer.music.unpause()
@@ -172,6 +177,37 @@ class Player(customtkinter.CTk):
                 self.slider.set(self.track_position)
         self.after_track_slide_id = self.after(1000, self.track_slide)
 
+    def skip_track(self):
+        """
+        Function to skip the current track and move to the next track in the playlist
+        :return:
+        """
+        self.track_number_playing += 1
+        self.current_track_playing()
+        pygame.mixer.music.unpause()
+
+    def previous_track(self):
+        """
+        Function to move playback to the previous track in the playlist
+        :return:
+        """
+        self.track_number_playing -= 1
+        self.current_track_playing()
+        pygame.mixer.music.unpause()
+
+    def toggle_repeat_playlist(self):
+        """
+        Function to turn on and off the option to repeat the playlist or not.
+
+        :return: None
+        """
+        if self.repeat_button.cget('fg_color') == 'purple':
+            self.repeat_button.configure(fg_color='green')
+            self.repeat_toggle = True
+        else:
+            self.repeat_button.configure(fg_color='purple')
+            self.repeat_toggle = False
+
     def start_next_track(self):
         """
         Function to monitor when a track ends and start the next track in a playlist
@@ -184,6 +220,7 @@ class Player(customtkinter.CTk):
         # if the get position is at the end of the song call
         for event in pygame.event.get():
             if event.type == self.MUSIC_END:
+                self.track_number_playing += 1
                 self.current_track_playing()
                 pygame.mixer.music.unpause()
         self.after_start_next_track_id = self.after(1000, self.start_next_track)
@@ -226,12 +263,14 @@ class Player(customtkinter.CTk):
         :return:
         """
         # get the song from the playlist array, check if end of the playlist, stop if so otherwise play next track
-        if self.track_number_playing >= len(self.queued_tracks):
+        if self.track_number_playing >= len(self.queued_tracks) and self.repeat_toggle is False:
             self.end_playlist()
             return
+        elif self.track_number_playing >= len(self.queued_tracks) and self.repeat_toggle is True:
+            self.track_number_playing = 0
         current_track = self.queued_tracks[self.track_number_playing]
         metadata = TinyTag.get(current_track, image=True)
-        self.track_number_playing += 1
+
 
         # Send track file path to microservice to get the metadata then retrieve it and store it for display
         playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
@@ -250,11 +289,33 @@ class Player(customtkinter.CTk):
         self.track_info.update_information(track_title, track_artist, track_album, track_number)
         self.track_time.configure(text=f'0:00')
         self.track_length.configure(text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):2d}')
+        self.set_album_art(metadata)
+
+    def set_album_art(self, metadata):
+        """
+        Function for applying and handling album art
+
+        :param metadata: metadata from track for searching for album image
+
+        :return: None
+        """
+        album_image = metadata.get_image()
+        if album_image is None:
+            self.album_image.configure(dark_image=Image.open('MUSIC PLAYER.png'))
+            return
+        self.album_image.configure(dark_image=Image.open(io.BytesIO(album_image)))
+        self.album_art_label.configure(image=self.album_image)
 
     def end_playlist(self):
+        """
+        Function to stop playback when the player reaches the end of the tracks in the playlist.
+
+        :return:
+        """
+        self.current_playlist = None
         # update the UI
         self.play_button.configure(image=self.play_image, text='', height=60, width=60)
-        pygame.mixer.music.pause()
+        pygame.mixer.music.unload()
         self.slider.configure(number_of_steps=100)
         self.track_position = 0
         self.slider.set(self.track_position)

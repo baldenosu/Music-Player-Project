@@ -15,12 +15,14 @@ class PlaylistEditor(customtkinter.CTkToplevel):
     """
     Class for creating a window instance of the playlist Editor screen
     """
-    def __init__(self, *args, **kwargs):
+    def __init__(self, update_playlist_view, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         self.geometry('500x500')
         self.title('Playlist Editor')
         self.minsize(500, 500)
+
+        self.update_playlist_view = update_playlist_view
 
         # Playlist Title, and Create Button
         self.playlist_label = customtkinter.CTkLabel(master=self, text='Playlist Name')
@@ -62,7 +64,8 @@ class PlaylistEditor(customtkinter.CTkToplevel):
             if os.path.isfile(filename):
                 shutil.copy(filename, playlist_location)
         # Give message that playlist was successfully created
-        playlist_built_message = customtkinter.CTkInputDialog(text='Playlist built successfully, you may close this window', title='Message Playlist Created')
+        playlist_built_message = customtkinter.CTkInputDialog(text='Playlist built successfully, you may close the editor', title='Playlist Created')
+        self.update_playlist_view(playlist_name)
 
 
 class TracksListFrame(customtkinter.CTkScrollableFrame):
@@ -85,7 +88,7 @@ class TracksListFrame(customtkinter.CTkScrollableFrame):
         """
         track_file = filedialog.askopenfilename()
         self.focus()
-        metadata = TinyTag.get(track_file)
+        metadata = TinyTag.get(track_file, image=True)
         new_track = TrackFrame(master=self, track_file=track_file, track_num=len(self.tracks)+1, metadata=metadata)
         self.tracks.append(new_track)
         new_track.grid(row=len(self.tracks), column=0, pady=10)
@@ -130,11 +133,11 @@ class TrackFrame(customtkinter.CTkFrame):
 
         # Length
         self.track_length = metadata.duration
-        self.track_length_label = customtkinter.CTkLabel(self, text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):2d}')
+        self.track_length_label = customtkinter.CTkLabel(self, text=f'{int(metadata.duration//60)}:{int(metadata.duration%60):02d}')
         self.track_length_label.grid(row=0, column=3, padx=10)
 
         # Delete Button
-        self.delete_button = customtkinter.CTkButton(self, command=self.delete_track, text='Delete', width=60)
+        self.delete_button = customtkinter.CTkButton(self, command=self.delete_track, text='Delete', width=60, hover_color='red')
         self.delete_button.grid(row=0, column=4, padx=10)
 
     def delete_track(self):

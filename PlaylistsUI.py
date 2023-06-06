@@ -22,15 +22,17 @@ class Playlists(customtkinter.CTkToplevel):
         self.title('Playlists')
         self.editor_window = None
         self.playlists = []
+        self.queue_playlist = queue_playlist
 
         # Playlists Frames containing playlist names and buttons for functions you can perform on the playlist.
         playlists_folder_path = 'D:/OSU Spring 2023/CS 361 Software Development/Assignments/Assignment-5/Playlists'
         with os.scandir(playlists_folder_path) as playlists_folder:
             for folder in playlists_folder:
                 if folder.is_dir():
-                    playlist = PlaylistFrame(master=self, playlist_name=folder.name, queue_playlist=queue_playlist, close_window=self.close_window)
+                    playlist = PlaylistFrame(master=self, playlist_name=folder.name, queue_playlist=self.queue_playlist,
+                                             close_window=self.close_window)
                     self.playlists.append(playlist)
-                    playlist.grid(row=len(self.playlists)+1, column=0)
+                    playlist.grid(row=len(self.playlists) + 1, column=0)
 
         # Create a new Playlist button
         self.create_playlist_button = customtkinter.CTkButton(master=self, command=self.create_playlist, text='Create Playlist')
@@ -43,15 +45,21 @@ class Playlists(customtkinter.CTkToplevel):
 
         :return: None
         """
-        create_message = customtkinter.CTkInputDialog(
-            text='Would you like me to walk you through the process of creating a Playlist?',
-            title='Creating New Playlist')
-        choice = create_message.get_input()
         if self.editor_window is None or not self.editor_window.winfo_exists():
-            self.editor_window = PlaylistEditorUI.PlaylistEditor(self)
+            self.editor_window = PlaylistEditorUI.PlaylistEditor(self.update_playlist_view)
             self.editor_window.after(20, self.editor_window.lift)
         else:
             self.editor_window.focus()
+
+    def update_playlist_view(self, playlist_name):
+        """
+        Updates the frame that contains the list of playlists by adding newly created playlist.
+
+        :return: None
+        """
+        playlist = PlaylistFrame(master=self, playlist_name=playlist_name, queue_playlist=self.queue_playlist, close_window=self.close_window)
+        self.playlists.append(playlist)
+        playlist.grid(row=len(self.playlists) + 1, column=0)
 
     def close_window(self):
         """
@@ -106,7 +114,7 @@ class PlaylistFrame(customtkinter.CTkFrame):
 
     def open_playlist_editor(self):
         """
-        Function to facilitate opening the playlist editor window when the create playlist button, or edit button is
+        Function to facilitate opening the playlist editor window when the edit button is
         clicked.
         :return: None
         """
