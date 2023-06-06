@@ -86,7 +86,7 @@ class TracksListFrame(customtkinter.CTkScrollableFrame):
         track_file = filedialog.askopenfilename()
         self.focus()
         metadata = TinyTag.get(track_file)
-        new_track = TrackFrame(master=self, track_file=track_file,track_num=len(self.tracks)+1, metadata=metadata)
+        new_track = TrackFrame(master=self, track_file=track_file, track_num=len(self.tracks)+1, metadata=metadata)
         self.tracks.append(new_track)
         new_track.grid(row=len(self.tracks), column=0, pady=10)
 

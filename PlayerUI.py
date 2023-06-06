@@ -117,6 +117,7 @@ class Player(customtkinter.CTk):
         self.trimmer_window = None
 
         self.start_next_track()
+        self.track_slide()
 
     def play_pause_button(self):
         """
@@ -142,11 +143,19 @@ class Player(customtkinter.CTk):
         # get the current position of the track in milliseconds and format it to something more readable
         current_time = pygame.mixer.music.get_pos()/1000
         self.slider.set(int(current_time))
+        print(int(current_time))
         formatted_time = f'{int(current_time//60)}:{int(current_time%60):02d}'
         self.track_time.configure(text=formatted_time)
         # continue tracking the time as long as the track is playing
         if self.play_button.cget('image') == self.pause_image:
             self.after(1000, self.current_time)
+
+    def track_slide(self):
+        if self.play_button.cget('image') == self.pause_image:
+            if self.slider.get() != int(pygame.mixer.music.get_pos()/1000):
+                pygame.mixer.music.set_pos(self.slider.get())
+                self.slider.set(pygame.mixer.music.get_pos()/1000)
+        self.after(1000, self.track_slide)
 
     def start_next_track(self):
         """
